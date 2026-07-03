@@ -1,4 +1,4 @@
-﻿/* ================================================
+/* ================================================
    LIFE DASHBOARD — script.js
    Vanilla JavaScript, No Frameworks
    ================================================ */
@@ -17,6 +17,8 @@ const greetingMessage = document.getElementById('greeting-message');
 const datetimeDisplay = document.getElementById('datetime-display');
 const userNameInput   = document.getElementById('user-name-input');
 const saveNameBtn     = document.getElementById('save-name-btn');
+const editNameBtn     = document.getElementById('edit-name-btn');
+const nameInputArea   = document.getElementById('name-input-area');
 
 // Nama hari dan bulan dalam bahasa Inggris
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -63,6 +65,23 @@ function updateDateTime() {
   datetimeDisplay.textContent = `${day}, ${date} ${mon} ${year}  —  ${hh}:${mm}:${ss}`;
 }
 
+
+// Tombol pensil — toggle munculnya form input nama
+editNameBtn.addEventListener('click', () => {
+  const isHidden = nameInputArea.hasAttribute('hidden');
+  if (isHidden) {
+    nameInputArea.removeAttribute('hidden');
+    editNameBtn.classList.add('active');
+    editNameBtn.title = 'Close';
+    userNameInput.focus();
+  } else {
+    nameInputArea.setAttribute('hidden', '');
+    editNameBtn.classList.remove('active');
+    editNameBtn.title = 'Edit name';
+    userNameInput.value = '';
+  }
+});
+
 // Simpan nama saat tombol Save ditekan
 saveNameBtn.addEventListener('click', () => {
   const name = userNameInput.value.trim();
@@ -70,9 +89,16 @@ saveNameBtn.addEventListener('click', () => {
     localStorage.setItem('userName', name);
     updateGreeting();
     userNameInput.value = '';
-    // Animasi kecil: tombol berubah jadi tanda centang sebentar
-    saveNameBtn.textContent = '✓ Saved!';
-    setTimeout(() => { saveNameBtn.textContent = 'Save'; }, 1500);
+    // Tutup form setelah simpan
+    nameInputArea.setAttribute('hidden', '');
+    editNameBtn.classList.remove('active');
+    editNameBtn.title = 'Edit name';
+    // Feedback singkat pada tombol pensil
+    editNameBtn.textContent = '✓';
+    setTimeout(() => { editNameBtn.textContent = '✎'; }, 1500);
+  } else {
+    userNameInput.style.borderColor = 'var(--accent-orange)';
+    setTimeout(() => { userNameInput.style.borderColor = ''; }, 1500);
   }
 });
 
@@ -98,21 +124,21 @@ setInterval(updateGreeting, 60000);
 const motivationalQuote = document.getElementById('motivational-quote');
 
 const QUOTES = [
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-  { text: "Code is like humor. When you have to explain it, it's bad.", author: "Cory House" },
-  { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
-  { text: "Experience is the name everyone gives to their mistakes.", author: "Oscar Wilde" },
-  { text: "In order to be irreplaceable, one must always be different.", author: "Coco Chanel" },
-  { text: "Java is to JavaScript what car is to carpet.", author: "Chris Heilmann" },
-  { text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" },
-  { text: "The best error message is the one that never shows up.", author: "Thomas Fuchs" },
-  { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
-  { text: "Before software can be reusable it first has to be usable.", author: "Ralph Johnson" },
-  { text: "Make it work, make it right, make it fast.", author: "Kent Beck" },
-  { text: "It's not a bug – it's an undocumented feature.", author: "Anonymous" },
-  { text: "The most disastrous thing that you can ever learn is your first programming language.", author: "Alan Kay" },
-  { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
-  { text: "Programs must be written for people to read, and only incidentally for machines to execute.", author: "Harold Abelson" },
+  { text: "You don’t have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
+  { text: "It is okay to be at a place of struggle. Struggle is just another word for growth.", author: "Idowu Koyenikan" },
+  { text: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
+  { text: "Sometimes the bravest and most important thing you can do is just show up.", author: "Brené Brown" },
+  { text: "Hard times are not the enemy of a good life. They are part of it.", author: "Anonymous" },
+  { text: "A journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
+  { text: "The best time to plant a tree was twenty years ago. The second best time is now.", author: "Chinese proverb" },
+  { text: "You don’t have to see the whole staircase, just take the first step.", author: "Martin Luther King Jr." },
+  { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
+  { text: "If you have a dream, don’t just sit there. Gather courage to believe that you can succeed and leave no stone unturned to make it a reality.", author: "Dr. Roopleen" },
+  { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+  { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+  { text: "Keep going. Your hardest times often lead to the greatest moments of your life.", author: "Roy T. Bennett" },
+  { text: "We must accept finite disappointment, but never lose infinite hope.", author: "Martin Luther King Jr." },
+  { text: "You may encounter many defeats, but you must not be defeated.", author: "Maya Angelou" },
 ];
 
 /**
@@ -196,6 +222,22 @@ if (streakCount > 0) {
   streakCountEl.classList.add('has-value');
   streakDisplayEl.classList.add('has-streak');
 }
+function updateStreakTier(count) {
+  const streakDisplayEl = document.getElementById('streak-display');
+  streakDisplayEl.classList.remove('tier-10', 'tier-50', 'tier-100', 'tier-300', 'tier-500');
+  if (count >= 201) {
+    streakDisplayEl.classList.add('tier-500');
+  } else if (count >= 51) {
+    streakDisplayEl.classList.add('tier-300');
+  } else if (count >= 11) {
+    streakDisplayEl.classList.add('tier-100');
+  } else if (count >= 4) {
+    streakDisplayEl.classList.add('tier-50');
+  } else if (count >= 1) {
+    streakDisplayEl.classList.add('tier-10');
+  }
+}
+updateStreakTier(streakCount);
 
 /**
  * Perbarui tampilan angka timer di layar
@@ -263,6 +305,7 @@ function timerTick() {
     streakCount++;
     localStorage.setItem('streakCount', streakCount);
     streakCountEl.textContent = streakCount;
+    updateStreakTier(streakCount)
 
     // Aktifkan class pulse idle (jika belum ada)
     streakCountEl.classList.add('has-value');
@@ -279,6 +322,10 @@ function timerTick() {
     // Catat sesi ke data analytics
     recordFocusSession();
 
+    // Restore energi + update Coder Class saat sesi selesai
+    restoreEnergy();
+    updateCoderClass(streakCount);
+
     // Update tombol
     timerStartBtn.disabled = false;
     timerPauseBtn.disabled = true;
@@ -287,6 +334,8 @@ function timerTick() {
   }
   timeRemaining--;
   renderTimer();
+  // Kurangi energi setiap detik saat timer berjalan
+  updateEnergyBar(energyLevel - getEnergyDrainPerSecond());
 }
 
 // Tombol START
@@ -347,12 +396,15 @@ timerResetBtn.addEventListener('click', () => {
   timerStartBtn.disabled = false;
   timerPauseBtn.disabled = true;
   timerStartBtn.textContent = '▶ Start';
+
+  // Restore energi ke 100% saat reset
+  restoreEnergy();
 });
 
 // Tombol APPLY DURATION (Challenge #2)
 applyDurationBtn.addEventListener('click', () => {
   const mins = parseInt(customMinutesEl.value);
-  if (isNaN(mins) || mins < 1 || mins > 120) {
+  if (isNaN(mins) || mins < 1 || mins > 180) {
     customMinutesEl.style.borderColor = 'var(--accent-orange)';
     setTimeout(() => { customMinutesEl.style.borderColor = ''; }, 1500);
     return;
@@ -378,6 +430,112 @@ applyDurationBtn.addEventListener('click', () => {
 
 // Render timer sekali saat halaman load
 renderTimer();
+
+/* ------------------------------------------------
+   MODUL RPG: MINI RPG STATUS SYSTEM
+   - Energy bar berkurang saat timer berjalan
+   - Warna bar berubah sesuai level
+   - Coder Class badge naik otomatis sesuai streak
+------------------------------------------------ */
+
+// ── Elemen DOM ──
+const energyBarFill  = document.getElementById('energy-bar-fill');
+const energyText     = document.getElementById('energy-text');
+const energyBarTrack = document.getElementById('energy-bar-track');
+const coderBadge     = document.getElementById('coder-class-badge');
+const coderRankText  = document.getElementById('coder-rank-text');
+
+// ── State energi (0–100) ──
+let energyLevel = 100;
+
+// ── Tabel rank berdasarkan total sesi ──
+const RANKS = [
+  { min: 0,  max: 3,  label: 'Wandering Mind',   class: ''         },
+  { min: 4,  max: 10,  label: 'Novice',    class: ''         },
+  { min: 11,  max: 50,  label: 'Warrior',    class: ''         },
+  { min: 51,  max: 200,  label: 'Zen Master',    class: ''         },
+  { min: 201, max: Infinity, label: 'Transcendent State', class: 'god-mode' },
+];
+
+/**
+ * Update tampilan energy bar — lebar, warna, teks
+ */
+function updateEnergyBar(value) {
+  // Clamp antara 0–100
+  energyLevel = Math.max(0, Math.min(100, value));
+
+  // Update lebar bar
+  energyBarFill.style.width = energyLevel + '%';
+
+  // Update teks persentase
+  energyText.textContent = Math.round(energyLevel) + '%';
+
+  // Update aria-valuenow untuk aksesibilitas
+  energyBarTrack.setAttribute('aria-valuenow', Math.round(energyLevel));
+
+  // Update warna berdasarkan level
+  energyBarFill.classList.remove('energy-medium', 'energy-low');
+  if (energyLevel <= 20) {
+    energyBarFill.classList.add('energy-low');
+    energyText.style.color = '#ff4444';
+  } else if (energyLevel <= 50) {
+    energyBarFill.classList.add('energy-medium');
+    energyText.style.color = 'var(--accent-yellow)';
+  } else {
+    energyText.style.color = 'var(--accent-cyan)';
+  }
+}
+
+/**
+ * Restore energi ke 100% (saat timer selesai atau reset)
+ */
+function restoreEnergy() {
+  updateEnergyBar(100);
+}
+
+/**
+ * Hitung penurunan energi per detik berdasarkan durasi timer
+ * Target: bar hampir habis (~10% sisa) di akhir sesi
+ * Rumus: kita drain dari 100 ke ~10 dalam timerDuration detik
+ * = 90 / timerDuration per detik
+ */
+function getEnergyDrainPerSecond() {
+  return 90 / timerDuration;
+}
+
+/**
+ * Cek jumlah sesi dan update Coder Class badge
+ */
+function updateCoderClass(totalSessions) {
+  const prevRankLabel = coderRankText.textContent;
+
+  // Cari rank yang sesuai
+  const rank = RANKS.slice().reverse().find(r => totalSessions >= r.min) || RANKS[0];
+
+  // Hanya trigger animasi jika rank berubah
+  if (rank.label !== prevRankLabel) {
+    // Hapus class lama, tambah class baru
+    coderBadge.classList.remove('god-mode', 'rank-up');
+
+    // Tunda sedikit untuk restart animasi
+    void coderBadge.offsetWidth;
+
+    coderRankText.textContent = rank.label;
+
+    if (rank.class) coderBadge.classList.add(rank.class);
+    coderBadge.classList.add('rank-up');
+
+    // Hapus class rank-up setelah animasi selesai
+    coderBadge.addEventListener('animationend', function handler() {
+      coderBadge.classList.remove('rank-up');
+      coderBadge.removeEventListener('animationend', handler);
+    });
+  }
+}
+
+// Inisialisasi saat halaman load
+updateEnergyBar(100);
+updateCoderClass(streakCount);
 
 
 /* ------------------------------------------------
@@ -456,10 +614,13 @@ function renderTasks() {
     return;
   }
 
-  sorted.forEach(task => {
+  sorted.forEach((task, index) => {
     const li = document.createElement('li');
-    li.className = `task-item${task.completed ? ' completed' : ''}`;
+    li.className = `task-item entry-stagger${task.completed ? ' completed' : ''}`;
     li.dataset.id = task.id;
+
+    // Stagger delay: setiap item muncul 60ms lebih lambat dari sebelumnya
+    li.style.animationDelay = `${index * 0.06}s`;
 
     // Tentukan emoji dan warna badge prioritas
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
@@ -788,9 +949,29 @@ function renderAnalytics() {
 
 // Tombol reset analytics
 resetAnalyticsBtn.addEventListener('click', () => {
-  if (confirm('Reset all analytics data? This cannot be undone.')) {
+  if (confirm('Reset all analytics data and your STREAK? This cannot be undone.')) {
     localStorage.removeItem('analyticsData');
     renderAnalytics();
+    localStorage.setItem('streakCount', '0');
+    streakCount = 0;
+    if (typeof streakCountEl !== 'undefined') {
+      streakCountEl.textContent = '0';
+      streakCountEl.classList.remove('has-value');
+    }
+    const streakDisplayEl = document.getElementById('streak-display');
+    if (streakDisplayEl) {
+      streakDisplayEl.classList.remove(
+        'has-streak', 
+        'tier-10', 
+        'tier-50', 
+        'tier-100', 
+        'tier-300', 
+        'tier-500'
+      );
+    }
+    if (typeof updateStreakTier === 'function') {
+      updateStreakTier(0);
+    }
   }
 });
 
@@ -799,220 +980,323 @@ renderAnalytics();
 
 
 /* ------------------------------------------------
-
-/* ------------------------------------------------
-   MODUL 7A: MULTIMEDIA PLAYER
-   -- YouTube: preset + custom track + iframe inject
-   -- Spotify: embed + custom URL connect
-   -- localStorage untuk custom tracks & Spotify URL
+   MODUL 7A: LOCAL MP3 DRAG & DROP PLAYER
+   - Drag & drop atau klik untuk load file MP3
+   - Playlist dengan navigasi prev/next
+   - Seek bar, volume, shuffle, repeat
+   - Audio Visualizer bar animasi CSS
+   - Marquee scroll untuk judul panjang
 ------------------------------------------------ */
 
-// -- Elemen DOM YouTube --
-const ytTrackButtons    = document.getElementById('youtube-track-buttons');
-const ytTitleInput      = document.getElementById('yt-title-input');
-const ytLinkInput       = document.getElementById('yt-link-input');
-const ytAddBtn          = document.getElementById('yt-add-btn');
-const ytPlayerContainer = document.getElementById('yt-player-container');
-const ytIframeWrapper   = document.getElementById('yt-iframe-wrapper');
-const ytNowPlaying      = document.getElementById('yt-now-playing');
-const ytCloseBtn        = document.getElementById('yt-close-btn');
+// ── Elemen DOM ──
+const dropZone      = document.getElementById('drop-zone');
+const fileInput     = document.getElementById('file-input');
+const trackTitle    = document.getElementById('track-title');
+const trackDuration = document.getElementById('track-duration');
+const seekBar       = document.getElementById('seek-bar');
+const volumeSlider  = document.getElementById('volume-slider');
+const btnPlay       = document.getElementById('btn-play');
+const btnPrev       = document.getElementById('btn-prev');
+const btnNext       = document.getElementById('btn-next');
+const btnShuffle    = document.getElementById('btn-shuffle');
+const btnRepeat     = document.getElementById('btn-repeat');
+const playlistEl    = document.getElementById('playlist');
+const visualizer    = document.getElementById('audio-visualizer');
 
-// -- Elemen DOM Spotify --
-const spotifyIframe     = document.getElementById('spotify-iframe');
-const spotifyUrlInput   = document.getElementById('spotify-url-input');
-const spotifyConnectBtn = document.getElementById('spotify-connect-btn');
+// ── State ──
+const audio      = new Audio();
+let playlist     = [];        // array { name, url (objectURL) }
+let currentIndex = -1;
+let isShuffled   = false;
+let isRepeat     = false;
+let isSeeking    = false;
 
-// -- State --
-let customTracks = JSON.parse(localStorage.getItem('ytCustomTracks') || '[]');
-
-/**
- * Ekstrak YouTube Video ID dari berbagai format URL atau raw ID
- */
-function extractYouTubeId(input) {
-  const trimmed = input.trim();
-  try {
-    const url = new URL(trimmed);
-    if (url.hostname.includes('youtube.com') && url.searchParams.get('v')) {
-      return url.searchParams.get('v');
-    }
-    if (url.hostname === 'youtu.be') {
-      return url.pathname.slice(1).split('?')[0];
-    }
-    if (url.pathname.includes('/embed/')) {
-      return url.pathname.split('/embed/')[1].split('?')[0];
-    }
-  } catch {
-    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
-  }
-  return null;
+// ── Format waktu mm:ss ──
+function formatTime(secs) {
+  if (isNaN(secs) || secs < 0) return '--:--';
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
 }
 
-/**
- * Inject iframe YouTube dan tampilkan player container
- */
-function loadYouTubeVideo(videoId, title) {
-  ytIframeWrapper.innerHTML = '';
-  const iframe = document.createElement('iframe');
-  iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1';
-  iframe.title = title;
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-  iframe.allowFullscreen = true;
-  iframe.loading = 'lazy';
-  ytIframeWrapper.appendChild(iframe);
-
-  ytPlayerContainer.removeAttribute('hidden');
-  ytNowPlaying.textContent = 'Now Playing: ' + title;
-
-  document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
-  const activeBtn = document.querySelector('.track-btn[data-videoid="' + videoId + '"]');
-  if (activeBtn) activeBtn.classList.add('active');
+// ── Bersihkan nama file: hapus ekstensi + ganti _ dan - ──
+function cleanName(filename) {
+  return filename
+    .replace(/\.(mp3|mpeg|ogg|wav|flac|aac)$/i, '')
+    .replace(/[_-]/g, ' ')
+    .trim();
 }
 
-/**
- * Render tombol custom track dari array customTracks
- */
-function renderCustomTracks() {
-  document.querySelectorAll('.track-btn.custom-btn').forEach(b => b.remove());
+// ── Render playlist ke DOM ──
+function renderPlaylist() {
+  playlistEl.innerHTML = '';
+  playlist.forEach(function(track, i) {
+    const li   = document.createElement('li');
+    li.className = 'playlist-item' + (i === currentIndex ? ' active' : '');
+    li.dataset.index = i;
+    li.innerHTML =
+      '<span class="track-num">' + (i + 1) + '</span>' +
+      '<span class="track-name" title="' + track.name + '">' + track.name + '</span>' +
+      '<button class="track-remove" data-index="' + i + '" aria-label="Remove track" title="Remove">✕</button>';
 
-  customTracks.forEach(function(track, index) {
-    const btn = document.createElement('button');
-    btn.className = 'track-btn custom-btn';
-    btn.dataset.videoid = track.videoId;
-    btn.dataset.index = index;
-    btn.textContent = '\uD83C\uDFB5 ' + track.title;
-    btn.setAttribute('aria-label', 'Play ' + track.title);
-    btn.title = 'Left-click to play | Right-click to delete';
-
-    btn.addEventListener('click', function() {
-      loadYouTubeVideo(track.videoId, track.title);
+    // Klik item → putar track
+    li.addEventListener('click', function(e) {
+      if (e.target.classList.contains('track-remove')) return;
+      loadTrack(i);
+      audio.play();
     });
 
-    btn.addEventListener('contextmenu', function(e) {
-      e.preventDefault();
-      if (confirm('Delete "' + track.title + '"?')) {
-        customTracks.splice(index, 1);
-        localStorage.setItem('ytCustomTracks', JSON.stringify(customTracks));
-        renderCustomTracks();
-      }
+    // Tombol hapus
+    li.querySelector('.track-remove').addEventListener('click', function(e) {
+      e.stopPropagation();
+      removeTrack(i);
     });
 
-    ytTrackButtons.appendChild(btn);
+    playlistEl.appendChild(li);
   });
 }
 
-/**
- * Tambah custom track baru
- */
-function addCustomTrack() {
-  const title   = ytTitleInput.value.trim();
-  const rawLink = ytLinkInput.value.trim();
+// ── Load track ke audio element ──
+function loadTrack(index) {
+  if (index < 0 || index >= playlist.length) return;
+  currentIndex = index;
+  const track  = playlist[index];
 
-  if (!title || !rawLink) {
-    if (!title)   ytTitleInput.style.borderColor = 'var(--accent-orange)';
-    if (!rawLink) ytLinkInput.style.borderColor  = 'var(--accent-orange)';
-    setTimeout(function() {
-      ytTitleInput.style.borderColor = '';
-      ytLinkInput.style.borderColor  = '';
-    }, 1500);
-    return;
-  }
-
-  const videoId = extractYouTubeId(rawLink);
-  if (!videoId) {
-    ytLinkInput.style.borderColor = 'var(--accent-orange)';
-    ytLinkInput.placeholder = 'Invalid YouTube URL or ID!';
-    setTimeout(function() {
-      ytLinkInput.style.borderColor = '';
-      ytLinkInput.placeholder = 'YouTube URL or ID...';
-    }, 2000);
-    return;
-  }
-
-  customTracks.push({ title: title, videoId: videoId });
-  localStorage.setItem('ytCustomTracks', JSON.stringify(customTracks));
-  renderCustomTracks();
-  loadYouTubeVideo(videoId, title);
-
-  ytTitleInput.value = '';
-  ytLinkInput.value  = '';
-  ytAddBtn.textContent = 'Added!';
-  setTimeout(function() { ytAddBtn.textContent = '+ Add'; }, 1500);
+  audio.src = track.url;
+  audio.load();
+  updateNowPlayingUI(track.name);
+  renderPlaylist();
 }
 
-// Preset buttons
-document.querySelectorAll('.track-btn.preset-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    loadYouTubeVideo(btn.dataset.videoid, btn.textContent.trim());
+// ── Update UI "Now Playing" ──
+function updateNowPlayingUI(name) {
+  // Reset animasi marquee dulu
+  trackTitle.classList.remove('scrolling');
+  trackTitle.textContent = name;
+  // Jika teks lebih panjang dari container, aktifkan marquee
+  setTimeout(function() {
+    if (trackTitle.scrollWidth > trackTitle.offsetWidth) {
+      // Duplikat teks untuk efek marquee seamless
+      trackTitle.textContent = name + '   •   ' + name;
+      trackTitle.classList.add('scrolling');
+    }
+  }, 100);
+  trackDuration.textContent = '--:-- / ' + formatTime(audio.duration);
+}
+
+// ── Hapus track dari playlist ──
+function removeTrack(index) {
+  // Revoke objectURL supaya tidak memory leak
+  URL.revokeObjectURL(playlist[index].url);
+  playlist.splice(index, 1);
+
+  if (playlist.length === 0) {
+    // Playlist kosong — reset semua
+    audio.pause();
+    audio.src = '';
+    currentIndex = -1;
+    trackTitle.textContent    = 'No track loaded';
+    trackDuration.textContent = '--:-- / --:--';
+    seekBar.value = 0;
+    visualizer.classList.remove('playing');
+    btnPlay.textContent = '▶';
+    renderPlaylist();
+    return;
+  }
+
+  // Jika track yang dihapus adalah yang sedang aktif
+  if (index === currentIndex) {
+    currentIndex = Math.min(index, playlist.length - 1);
+    loadTrack(currentIndex);
+    audio.play();
+  } else if (index < currentIndex) {
+    currentIndex--;
+  }
+  renderPlaylist();
+}
+
+// ── Tambah file ke playlist ──
+function addFiles(files) {
+  let added = 0;
+  Array.from(files).forEach(function(file) {
+    if (!file.type.includes('audio') && !file.name.match(/\.(mp3|ogg|wav|flac|aac)$/i)) return;
+    const url  = URL.createObjectURL(file);
+    const name = cleanName(file.name);
+    playlist.push({ name: name, url: url });
+    added++;
   });
-});
 
-ytAddBtn.addEventListener('click', addCustomTrack);
-ytLinkInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') addCustomTrack();
-});
+  if (added === 0) return;
+  renderPlaylist();
 
-ytCloseBtn.addEventListener('click', function() {
-  ytIframeWrapper.innerHTML = '';
-  ytPlayerContainer.setAttribute('hidden', '');
-  ytNowPlaying.textContent = 'Now Playing: --';
-  document.querySelectorAll('.track-btn').forEach(function(b) { b.classList.remove('active'); });
-});
-
-renderCustomTracks();
-
-// -- SPOTIFY LOGIC --
-
-/**
- * Konversi Spotify URL ke format embed
- */
-function convertToSpotifyEmbedUrl(input) {
-  const trimmed = input.trim();
-  try {
-    const url = new URL(trimmed);
-    if (!url.hostname.includes('spotify.com')) return null;
-    const path = url.pathname;
-    if (!path.match(/^\/(playlist|album|track|episode|show)\//)) return null;
-    return 'https://open.spotify.com/embed' + path + '?utm_source=generator&theme=0';
-  } catch {
-    return null;
+  // Auto-play track pertama yang baru ditambahkan
+  if (currentIndex === -1) {
+    loadTrack(0);
+    audio.play();
   }
 }
 
-function connectSpotify() {
-  const raw = spotifyUrlInput.value.trim();
-  if (!raw) {
-    spotifyUrlInput.style.borderColor = 'var(--accent-orange)';
-    setTimeout(function() { spotifyUrlInput.style.borderColor = ''; }, 1500);
-    return;
+// ── Pilih track berikutnya (next/prev dengan shuffle support) ──
+function getNextIndex(direction) {
+  if (playlist.length === 0) return -1;
+
+  if (isShuffled) {
+    let rand;
+    do { rand = Math.floor(Math.random() * playlist.length); }
+    while (playlist.length > 1 && rand === currentIndex);
+    return rand;
   }
 
-  const embedUrl = convertToSpotifyEmbedUrl(raw);
-  if (!embedUrl) {
-    spotifyUrlInput.style.borderColor = 'var(--accent-orange)';
-    spotifyUrlInput.placeholder = 'Invalid Spotify URL!';
-    setTimeout(function() {
-      spotifyUrlInput.style.borderColor = '';
-      spotifyUrlInput.placeholder = 'Paste Spotify playlist/album URL...';
-    }, 2000);
-    return;
-  }
-
-  spotifyIframe.src = embedUrl;
-  localStorage.setItem('spotifyEmbedUrl', embedUrl);
-  spotifyUrlInput.value = '';
-  spotifyConnectBtn.textContent = 'Connected!';
-  setTimeout(function() { spotifyConnectBtn.textContent = 'Connect'; }, 2000);
+  const next = currentIndex + direction;
+  if (next < 0)                  return playlist.length - 1;
+  if (next >= playlist.length)   return 0;
+  return next;
 }
 
-const savedSpotifyUrl = localStorage.getItem('spotifyEmbedUrl');
-if (savedSpotifyUrl) spotifyIframe.src = savedSpotifyUrl;
-
-spotifyConnectBtn.addEventListener('click', connectSpotify);
-spotifyUrlInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') connectSpotify();
+// ── Event: audio time update → update seek bar & durasi ──
+audio.addEventListener('timeupdate', function() {
+  if (isSeeking || isNaN(audio.duration)) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  seekBar.value = pct;
+  trackDuration.textContent =
+    formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
 });
 
+// ── Event: metadata loaded → update durasi ──
+audio.addEventListener('loadedmetadata', function() {
+  trackDuration.textContent =
+    formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+});
 
+// ── Event: audio ended ──
+audio.addEventListener('ended', function() {
+  if (isRepeat) {
+    audio.currentTime = 0;
+    audio.play();
+    return;
+  }
+  const next = getNextIndex(1);
+  if (next !== -1) {
+    loadTrack(next);
+    audio.play();
+  } else {
+    // Playlist habis
+    visualizer.classList.remove('playing');
+    btnPlay.textContent = '▶';
+  }
+});
+
+// ── Event: play / pause state ──
+audio.addEventListener('play', function() {
+  btnPlay.textContent = '⏸';
+  visualizer.classList.add('playing');
+});
+
+audio.addEventListener('pause', function() {
+  btnPlay.textContent = '▶';
+  visualizer.classList.remove('playing');
+});
+
+// ── Tombol Play/Pause ──
+btnPlay.addEventListener('click', function() {
+  if (playlist.length === 0) return;
+  if (audio.paused) {
+    if (!audio.src) loadTrack(0);
+    audio.play();
+  } else {
+    audio.pause();
+  }
+});
+
+// ── Tombol Prev / Next ──
+btnPrev.addEventListener('click', function() {
+  // Jika > 3 detik berjalan, restart track saat ini
+  if (audio.currentTime > 3) {
+    audio.currentTime = 0;
+    return;
+  }
+  const idx = getNextIndex(-1);
+  if (idx !== -1) { loadTrack(idx); audio.play(); }
+});
+
+btnNext.addEventListener('click', function() {
+  const idx = getNextIndex(1);
+  if (idx !== -1) { loadTrack(idx); audio.play(); }
+});
+
+// ── Tombol Shuffle ──
+btnShuffle.addEventListener('click', function() {
+  isShuffled = !isShuffled;
+  btnShuffle.classList.toggle('active', isShuffled);
+});
+
+// ── Tombol Repeat ──
+btnRepeat.addEventListener('click', function() {
+  isRepeat = !isRepeat;
+  btnRepeat.classList.toggle('active', isRepeat);
+});
+
+// ── Seek Bar ──
+seekBar.addEventListener('mousedown', function() { isSeeking = true; });
+seekBar.addEventListener('touchstart', function() { isSeeking = true; });
+
+seekBar.addEventListener('input', function() {
+  if (isNaN(audio.duration)) return;
+  const t = (seekBar.value / 100) * audio.duration;
+  trackDuration.textContent = formatTime(t) + ' / ' + formatTime(audio.duration);
+});
+
+seekBar.addEventListener('change', function() {
+  if (!isNaN(audio.duration)) {
+    audio.currentTime = (seekBar.value / 100) * audio.duration;
+  }
+  isSeeking = false;
+});
+
+// ── Volume Slider ──
+audio.volume = parseFloat(volumeSlider.value);
+volumeSlider.addEventListener('input', function() {
+  audio.volume = parseFloat(volumeSlider.value);
+  document.getElementById('vol-icon').textContent =
+    audio.volume === 0 ? '🔇' : audio.volume < 0.4 ? '🔉' : '🔊';
+});
+
+// ── Drag & Drop ──
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', function() {
+  dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  addFiles(e.dataTransfer.files);
+});
+
+// ── Klik drop zone → buka file picker ──
+dropZone.addEventListener('click', function() {
+  fileInput.click();
+});
+
+// ── Keyboard accessibility (Enter/Space) pada drop zone ──
+dropZone.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    fileInput.click();
+  }
+});
+
+fileInput.addEventListener('change', function() {
+  if (fileInput.files.length > 0) addFiles(fileInput.files);
+  // Reset input supaya file yang sama bisa di-load ulang
+  fileInput.value = '';
+});
+
+/* ------------------------------------------------
    MODUL 7B: TOGGLE ANALYTICS GRAPH
    - Tombol show/hide grafik dengan animasi slide
    - Simpan state (terbuka/tertutup) di localStorage
@@ -1138,4 +1422,3 @@ function initScrollReveal() {
 // Jalankan setelah DOM selesai dimuat
 // (script.js sudah di bawah body, jadi DOM pasti ready)
 initScrollReveal();
-
