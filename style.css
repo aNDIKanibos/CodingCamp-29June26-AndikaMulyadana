@@ -1,0 +1,1881 @@
+/* ================================================
+   LIFE DASHBOARD — style.css
+   Tech/Engineering Theme
+   ================================================ */
+
+/* ------------------------------------------------
+   PART 1: CSS VARIABLES & RESET
+   Semua warna dan font didefinisikan di sini
+   supaya mudah diubah cukup di satu tempat
+------------------------------------------------ */
+:root {
+  /* Palet warna utama: dark tech / cyberpunk */
+  --bg-dark:        #0a0e1a;   /* background utama (navy gelap) */
+  --bg-card:        #111827;   /* background kartu/section */
+  --bg-card-hover:  #1a2235;   /* hover state kartu */
+  --border-color:   #1e3a5f;   /* warna garis tepi */
+
+  /* Warna aksen / highlight */
+  --accent-cyan:    #00d4ff;   /* warna utama — cyan neon */
+  --accent-green:   #00ff88;   /* hijau neon (task selesai, streak) */
+  --accent-orange:  #ff6b35;   /* oranye (high priority, peringatan) */
+  --accent-yellow:  #ffd700;   /* kuning (medium priority) */
+  --accent-purple:  #a855f7;   /* ungu (analytics, quotes) */
+
+  /* Warna teks */
+  --text-primary:   #e2e8f0;   /* teks utama (putih soft) */
+  --text-secondary: #94a3b8;   /* teks sekunder (abu-abu) */
+  --text-muted:     #475569;   /* teks sangat redup */
+
+  /* Tipografi */
+  --font-display:   'Share Tech Mono', monospace;  /* font tech untuk timer */
+  --font-body:      'Inter', sans-serif;            /* font body untuk teks */
+
+  /* Ukuran dan spacing */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --gap:         1.5rem;
+
+  /* Transisi standar */
+  --transition:  all 0.3s ease;
+}
+
+/* Reset dasar — hapus margin/padding bawaan browser */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------------------------------------
+   PART 2: BODY, BACKGROUND GRID & APP LAYOUT
+------------------------------------------------ */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+  /* Hapus position: relative supaya ::before tidak tertimpa */
+}
+
+/* Animated grid background — efek "engineering blueprint" */
+#bg-grid {
+  position: fixed;
+  inset: 0;                  /* cover seluruh layar */
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridPulse 4s ease-in-out infinite;
+  pointer-events: none;      /* tidak menghalangi klik */
+}
+
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+
+/* App wrapper — CSS Grid utama dashboard */
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;          /* lebih lebar supaya 2 kolom nyaman */
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  display: grid;
+  /* 1 kolom saja di level app — baris diatur oleh child grid */
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+
+/* ── BARIS 2: Main Grid (Todo kiri | Timer kanan) ── */
+#main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* 2 kolom sama lebar */
+  gap: var(--gap);
+  align-items: start;               /* kartu tidak perlu sama tinggi */
+}
+
+/* Todo selalu di kolom 1, Timer di kolom 2 */
+#todo-section  { grid-column: 1; }
+#timer-section { grid-column: 2; }
+
+/* ── BARIS 3: Bottom Grid (Links kiri | Ambient kanan) ── */
+#bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* 2 kolom sama lebar */
+  gap: var(--gap);
+  align-items: start;
+}
+
+#links-section   { grid-column: 1; }
+#ambient-section { grid-column: 2; }
+
+/* ── BARIS 4: Tombol Toggle Grafik ── */
+#analytics-toggle-row {
+  display: flex;
+  justify-content: center;
+}
+
+#toggle-analytics-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#toggle-analytics-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+/* Ikon panah berputar saat grafik terbuka */
+#toggle-analytics-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+#toggle-analytics-btn[aria-expanded="true"] #toggle-analytics-icon {
+  transform: rotate(180deg);
+}
+
+/* ── BARIS 5: Analytics section — animasi slide & fade ── */
+#analytics-section {
+  overflow: hidden;
+  /* State default: tersembunyi dengan transform */
+  transform-origin: top center;
+}
+
+/* State tersembunyi — via JS yang menambah class 'is-hidden' */
+#analytics-section.is-hidden {
+  display: none;
+}
+
+/* Animasi MASUK: meluncur dari atas + fade in */
+#analytics-section.slide-in {
+  animation: slideInDown 0.4s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+
+/* Animasi KELUAR: meluncur ke atas + fade out */
+#analytics-section.slide-out {
+  animation: slideOutUp 0.3s ease-in both;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes slideOutUp {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scaleY(0.95);
+  }
+}
+
+/* Sembunyikan dengan attribute hidden bawaan HTML (fallback) */
+#analytics-section[hidden] {
+  display: none;
+}
+
+/* Style kartu umum — dipakai semua section */
+header, section, footer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  /* Penting: position relative untuk pseudo-element glow */
+  position: relative;
+  overflow: hidden;
+  /* Transisi gabungan: transform + shadow + border */
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.35s ease,
+              border-color 0.35s ease;
+  will-change: transform;
+}
+
+/* Garis glow di atas kartu — muncul saat hover */
+header::before, section::before, footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--accent-cyan),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  border-radius: 999px;
+}
+
+/* Efek Lift & Glow saat hover */
+header:hover, section:hover, footer:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 212, 255, 0.5);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),      /* bayangan kedalaman */
+    0 0 20px rgba(0, 212, 255, 0.12),    /* glow luar tipis */
+    inset 0 1px 0 rgba(0, 212, 255, 0.1); /* highlight tepi atas */
+}
+
+/* Tampilkan garis glow atas saat hover */
+header:hover::before, section:hover::before, footer:hover::before {
+  opacity: 1;
+}
+
+/* Judul tiap section */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--accent-cyan);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+/* ------------------------------------------------
+   PART 3: HEADER — Greeting, DateTime, Quote
+------------------------------------------------ */
+#greeting-section {
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efek glow di atas header */
+#greeting-section::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 300px; height: 80px;
+  background: radial-gradient(ellipse, rgba(0, 212, 255, 0.15), transparent 70%);
+  pointer-events: none;
+}
+
+#greeting-message {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  animation: fadeSlideDown 0.6s ease both;
+}
+
+/* Nama user di dalam greeting akan berwarna cyan */
+#greeting-message span {
+  color: var(--accent-cyan);
+}
+
+#datetime-display {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+  animation: fadeSlideDown 0.7s ease both;
+}
+
+/* Box quote motivasi */
+#quote-box {
+  margin: 1.2rem auto;
+  max-width: 600px;
+  padding: 0.8rem 1.2rem;
+  border-left: 3px solid var(--accent-purple);
+  background: rgba(168, 85, 247, 0.07);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  animation: fadeIn 1s ease both;
+}
+
+#motivational-quote {
+  font-style: italic;
+  color: var(--accent-purple);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  /* Transisi opacity untuk quote lama fade out */
+  transition: opacity 0.3s ease;
+}
+
+/* Kursor berkedip saat typewriter sedang berjalan */
+#motivational-quote.typewriter-active::after {
+  content: '▋';
+  display: inline-block;
+  color: var(--accent-cyan);
+  animation: cursorBlink 0.7s step-end infinite;
+  margin-left: 2px;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Input nama kustom */
+/* Baris greeting + tombol pensil */
+#greeting-message-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Tombol pensil ✏️ */
+#edit-name-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.35rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+  line-height: 1;
+  flex-shrink: 0;
+  /* Sedikit lebih kecil dari heading */
+  margin-top: 0.2rem;
+}
+
+#edit-name-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.08);
+  transform: rotate(-15deg) scale(1.15);
+}
+
+/* Saat form sedang terbuka, tombol berubah warna */
+#edit-name-btn.active {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+/* Form input nama — animasi slide-down saat muncul */
+#name-input-area {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  flex-wrap: wrap;
+  /* Animasi masuk */
+  animation: slideInDown 0.3s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+
+/* Saat hidden — browser menyembunyikan sepenuhnya */
+#name-input-area[hidden] {
+  display: none;
+}
+
+#user-name-input {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  width: 200px;
+  transition: var(--transition);
+}
+
+#user-name-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+}
+
+#save-name-btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--accent-cyan);
+  color: var(--bg-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#save-name-btn:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+
+/* ------------------------------------------------
+   PART 3B: MINI RPG STATUS SYSTEM
+------------------------------------------------ */
+#rpg-status-container {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem auto 0;
+  max-width: 560px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Kotak stat individual */
+.rpg-stat-box {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.rpg-stat-box:hover {
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 14px rgba(0, 212, 255, 0.07);
+}
+
+/* Header baris label + persentase */
+.rpg-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rpg-stat-label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#energy-text {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  letter-spacing: 0.05em;
+  transition: color 0.5s ease;
+}
+
+/* ── Energy Bar Track ── */
+#energy-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+/* ── Energy Bar Fill ── */
+#energy-bar-fill {
+  height: 100%;
+  width: 100%;                 /* diupdate oleh JS */
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.6s ease;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sheen kilat pada energy bar */
+#energy-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: energySheen 3s ease-in-out infinite;
+}
+
+@keyframes energySheen {
+  0%   { left: -60%; }
+  100% { left: 130%; }
+}
+
+/* State warna berdasarkan level energi */
+#energy-bar-fill.energy-medium {
+  background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+#energy-bar-fill.energy-low {
+  background: linear-gradient(90deg, #ff4444, var(--accent-orange));
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+  animation: energyPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes energyPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* ── Coder Class Badge ── */
+#coder-class-box {
+  border-color: rgba(168, 85, 247, 0.2);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-width: 160px;
+  flex: 0 1 auto;
+}
+
+#coder-class-box:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.1);
+}
+
+#coder-class-badge {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: rgba(168, 85, 247, 0.1);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#coder-rank-text {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  color: var(--accent-purple);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Animasi rank naik */
+#coder-class-badge.rank-up {
+  animation: rankUpPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes rankUpPop {
+  0%   { transform: scale(1);    filter: brightness(1);   }
+  40%  { transform: scale(1.18); filter: brightness(1.6); box-shadow: 0 0 24px rgba(168, 85, 247, 0.7); }
+  100% { transform: scale(1);    filter: brightness(1);   }
+}
+
+/* GOD MODE — efek rainbow glow khusus */
+#coder-class-badge.god-mode {
+  border-color: transparent;
+  background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(0,212,255,0.2));
+  animation: godModeGlow 2s ease-in-out infinite;
+}
+
+#coder-class-badge.god-mode #coder-rank-text {
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan), var(--accent-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes godModeGlow {
+  0%, 100% { box-shadow: 0 0 14px rgba(168, 85, 247, 0.5); }
+  33%       { box-shadow: 0 0 18px rgba(0, 212, 255, 0.5);  }
+  66%       { box-shadow: 0 0 18px rgba(0, 255, 136, 0.5);  }
+}
+
+/* ------------------------------------------------
+   PART 4: TIMER SECTION
+------------------------------------------------ */
+#timer-section {
+  text-align: center;
+  /* Transisi untuk perubahan glow border saat state berubah */
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.6s ease,
+              border-color 0.6s ease;
+}
+
+/* Border kartu ikut glow saat timer running */
+#timer-section.timer-running {
+  border-color: rgba(0, 212, 255, 0.5);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(0, 212, 255, 0.12),
+    inset 0 0 20px rgba(0, 212, 255, 0.04);
+}
+
+/* Border kartu glow hangat saat timer paused */
+#timer-section.timer-paused {
+  border-color: rgba(255, 215, 0, 0.45);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(255, 165, 0, 0.1),
+    inset 0 0 20px rgba(255, 215, 0, 0.04);
+}
+
+/* Streak display */
+#streak-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 999px;
+  padding: 0.3rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  /* Pulse pada container saat streak > 0 */
+  transition: box-shadow 0.3s ease;
+}
+#streak-display.tier-10 {
+  border-color: #00ff88 !important; /* Mengubah warna garis border */
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3) !important; /* Efek neon pada border */
+}
+#streak-display.tier-10,
+#streak-display.tier-10 * {
+  color: #00ff88 !important;
+  -webkit-text-fill-color: #00ff88 !important;
+  background: transparent !important;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.6) !important;
+}
+#streak-display.tier-50 {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3) !important;
+}
+#streak-display.tier-50,
+#streak-display.tier-50 * {
+  color: #00d4ff !important;
+  -webkit-text-fill-color: #00d4ff !important;
+  background: transparent !important;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.6) !important;
+}
+#streak-display.tier-100 {
+  border-color: #bd00ff !important;
+  box-shadow: 0 0 12px rgba(189, 0, 255, 0.3) !important;
+}
+#streak-display.tier-100,
+#streak-display.tier-100 * {
+  color: #bd00ff !important;
+  -webkit-text-fill-color: #bd00ff !important;
+  background: transparent !important;
+  text-shadow: 0 0 10px rgba(189, 0, 255, 0.6) !important;
+}
+#streak-display.tier-300 {
+  border-color: #ffaa00 !important;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.3) !important;
+}
+#streak-display.tier-300,
+#streak-display.tier-300 * {
+  color: #ffaa00 !important;
+  -webkit-text-fill-color: #ffaa00 !important;
+  background: transparent !important;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.6) !important;
+}
+#streak-display.tier-500 {
+  border-color: #ff0055 !important;
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.4) !important;
+  animation: god-pulse 0.8s infinite alternate !important; /* Tetap mempertahankan animasi getar */
+}
+#streak-display.tier-500,
+#streak-display.tier-500 * {
+  color: #ff0055 !important;
+  -webkit-text-fill-color: #ff0055 !important;
+  background: transparent !important;
+  text-shadow: 0 0 15px rgba(255, 0, 85, 0.8) !important;
+}
+@keyframes god-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); box-shadow: 0 0 22px rgba(255, 0, 85, 0.6) !important; }
+}
+
+/* Glow ring pada container saat streak aktif */
+#streak-display.has-streak {
+  box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4);
+  animation: streakContainerPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes streakContainerPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+    border-color: rgba(0, 255, 136, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 12px 3px rgba(0, 255, 136, 0.2);
+    border-color: rgba(0, 255, 136, 0.6);
+  }
+}
+
+#streak-count {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--accent-green);
+  font-weight: 700;
+  display: inline-block;     /* Penting untuk transform animasi */
+  transition: color 0.3s ease;
+}
+
+/* Digit pulse idle — berdenyut pelan terus-menerus */
+#streak-count.has-value {
+  animation: digitalPulse 3s ease-in-out infinite;
+}
+
+@keyframes digitalPulse {
+  0%, 100% {
+    text-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(0, 255, 136, 0.9),
+                 0 0 30px rgba(0, 255, 136, 0.4);
+    transform: scale(1.06);
+  }
+}
+
+#streak-label {
+  color: var(--text-secondary);
+}
+
+/* Animasi "glow pop" saat streak naik — override digitalPulse sebentar */
+@keyframes glowPop {
+  0%   { transform: scale(1); }
+  40%  {
+    transform: scale(1.4);
+    text-shadow: 0 0 24px rgba(0, 255, 136, 1),
+                 0 0 40px rgba(0, 255, 136, 0.6);
+    color: #fff;
+  }
+  100% {
+    transform: scale(1);
+    color: var(--accent-green);
+  }
+}
+
+.streak-pop {
+  animation: glowPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+
+/* Tampilan angka timer besar */
+#timer-display {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  color: var(--accent-cyan);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+  margin: 0.5rem 0;
+  transition: color 0.5s, text-shadow 0.5s;
+  will-change: text-shadow;
+}
+
+/* ── GLOW MODE 1: Running (Cyan Breathing) ── */
+#timer-display.timer-running {
+  color: var(--accent-cyan);
+  animation: breathingGlowCyan 2.5s ease-in-out infinite;
+}
+
+@keyframes breathingGlowCyan {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(0, 212, 255, 0.6),
+      0 0 40px rgba(0, 212, 255, 0.4),
+      0 0 60px rgba(0, 212, 255, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 30px rgba(0, 212, 255, 1),
+      0 0 60px rgba(0, 212, 255, 0.7),
+      0 0 90px rgba(0, 212, 255, 0.4),
+      0 0 120px rgba(0, 212, 255, 0.2);
+    transform: scale(1.02);
+  }
+}
+
+/* ── GLOW MODE 2: Paused (Orange/Yellow Steady) ── */
+#timer-display.timer-paused {
+  color: var(--accent-yellow);
+  animation: steadyGlowWarm 3s ease-in-out infinite;
+}
+
+@keyframes steadyGlowWarm {
+  0%, 100% {
+    text-shadow:
+      0 0 18px rgba(255, 215, 0, 0.7),
+      0 0 36px rgba(255, 165, 0, 0.5),
+      0 0 54px rgba(255, 140, 0, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 24px rgba(255, 215, 0, 0.9),
+      0 0 48px rgba(255, 165, 0, 0.6),
+      0 0 72px rgba(255, 140, 0, 0.4);
+  }
+}
+
+/* Warna berubah merah saat timer hampir habis (< 10 detik) */
+#timer-display.danger {
+  color: var(--accent-orange);
+  text-shadow: 0 0 30px rgba(255, 107, 53, 0.6);
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+
+/* Titik dua timer berkedip */
+#timer-colon {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Input durasi kustom */
+#timer-custom-duration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+#custom-minutes {
+  width: 70px;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+#custom-minutes:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+#apply-duration-btn {
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-cyan);
+  background: transparent;
+  color: var(--accent-cyan);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#apply-duration-btn:hover {
+  background: var(--accent-cyan);
+  color: var(--bg-dark);
+}
+
+/* Tombol Start / Pause / Reset */
+#timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+#timer-controls button {
+  padding: 0.6rem 1.6rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 2px solid transparent;
+}
+
+#timer-start-btn {
+  background: var(--accent-green);
+  color: var(--bg-dark);
+  border-color: var(--accent-green);
+}
+
+#timer-start-btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--accent-green);
+}
+
+#timer-pause-btn {
+  background: var(--accent-yellow);
+  color: var(--bg-dark);
+  border-color: var(--accent-yellow);
+}
+
+#timer-pause-btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--accent-yellow);
+}
+
+#timer-reset-btn {
+  background: transparent;
+  color: var(--accent-orange);
+  border-color: var(--accent-orange);
+}
+
+#timer-reset-btn:hover {
+  background: var(--accent-orange);
+  color: var(--bg-dark);
+}
+
+/* State disabled tombol */
+#timer-controls button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ------------------------------------------------
+   PART 5: TO-DO LIST
+------------------------------------------------ */
+
+/* Progress bar */
+#progress-container {
+  margin-bottom: 1.25rem;
+}
+
+#progress-bar-track {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-dark);
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+#progress-bar-fill {
+  height: 100%;
+  width: 0%;                  /* diupdate oleh JS */
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+  /* Penting untuk pseudo-element sheen */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sheen: kilatan cahaya yang berjalan dari kiri ke kanan */
+#progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  animation: progressSheen 2.2s ease-in-out infinite;
+  /* Hanya tampil jika bar tidak kosong */
+  border-radius: 999px;
+}
+
+/* Sembunyikan sheen saat progress 0% */
+#progress-bar-fill[style*="width: 0%"]::after,
+#progress-bar-fill[style*="width:0%"]::after {
+  display: none;
+}
+
+@keyframes progressSheen {
+  0%   { left: -60%; opacity: 0;   }
+  20%  { opacity: 1; }
+  100% { left: 120%; opacity: 0;   }
+}
+
+#progress-label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+
+/* Input area tambah task */
+#todo-input-area {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+#new-task-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+#new-task-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12);
+}
+
+#task-priority {
+  padding: 0.6rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#add-task-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--accent-cyan);
+  color: var(--bg-dark);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+#add-task-btn:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+/* Sort controls */
+#sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.sort-btn {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.sort-btn:hover,
+.sort-btn.active {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+/* Daftar task */
+#task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Item task individual — dibuat oleh JS dengan class ini */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  transition: var(--transition);
+  animation: fadeSlideUp 0.25s ease both;
+}
+
+.task-item:hover {
+  border-color: var(--accent-cyan);
+  background: var(--bg-card-hover);
+}
+
+/* Task yang sudah dicentang */
+.task-item.completed .task-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+}
+
+/* Checkbox kustom */
+.task-checkbox {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+}
+
+.task-checkbox.checked {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: var(--bg-dark);
+}
+
+.task-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+/* Badge prioritas */
+.task-priority-badge {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.priority-high   { background: rgba(255, 107, 53, 0.15); color: var(--accent-orange); }
+.priority-medium { background: rgba(255, 215,  0, 0.12); color: var(--accent-yellow); }
+.priority-low    { background: rgba(0, 255, 136, 0.10); color: var(--accent-green);  }
+
+/* Tombol hapus task */
+.task-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.task-delete-btn:hover {
+  color: var(--accent-orange);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+/* ------------------------------------------------
+   PART 6A: QUICK LINKS
+------------------------------------------------ */
+#link-input-area {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+#new-link-name {
+  width: 130px;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  transition: var(--transition);
+}
+
+#new-link-url {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  transition: var(--transition);
+}
+
+#new-link-name:focus,
+#new-link-url:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12);
+}
+
+#add-link-btn {
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--accent-cyan);
+  color: var(--bg-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+#add-link-btn:hover { background: #fff; transform: translateY(-1px); }
+
+/* Grid kartu link */
+#links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Kartu link individual — dibuat oleh JS */
+.link-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  text-align: center;
+  gap: 0.4rem;
+  transition: var(--transition);
+  animation: fadeSlideUp 0.25s ease both;
+  word-break: break-word;
+}
+
+.link-card:hover {
+  border-color: var(--accent-cyan);
+  background: var(--bg-card-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.15);
+}
+
+.link-card .link-icon { font-size: 1.4rem; }
+.link-card .link-name { font-weight: 600; }
+.link-card .link-domain {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Tombol hapus link (muncul saat hover) */
+.link-delete-btn {
+  position: absolute;
+  top: 4px; right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.link-card:hover .link-delete-btn { opacity: 1; }
+.link-delete-btn:hover { color: var(--accent-orange); }
+
+/* ------------------------------------------------
+   PART 6B: ANALYTICS — Weekly Bar Chart
+------------------------------------------------ */
+#analytics-section { text-align: center; }
+
+#analytics-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* Container bar chart */
+#bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 160px;
+  padding: 0 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Satu kolom bar (dibuat oleh JS) */
+.bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+  max-width: 70px;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: linear-gradient(180deg, var(--accent-cyan), rgba(0, 212, 255, 0.3));
+  min-height: 4px;
+  transition: height 0.6s ease;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+/* Highlight bar hari ini */
+.bar-fill.today {
+  background: linear-gradient(180deg, var(--accent-green), rgba(0, 255, 136, 0.3));
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.4);
+}
+
+.bar-value {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+}
+
+.bar-day {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#reset-analytics-btn {
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#reset-analytics-btn:hover {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+}
+
+/* ------------------------------------------------
+   PART 7A: LOCAL MP3 DRAG & DROP PLAYER
+------------------------------------------------ */
+#ambient-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* ── Drop Zone ── */
+#drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background: transparent;
+  user-select: none;
+}
+
+#drop-zone:hover,
+#drop-zone.drag-over {
+  border-color: var(--accent-purple);
+  background: rgba(168, 85, 247, 0.06);
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.15);
+}
+
+#drop-zone.drag-over {
+  transform: scale(1.02);
+}
+
+#drop-icon {
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+#drop-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+#drop-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+/* ── Now Playing ── */
+#now-playing-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 42px;
+}
+
+/* Audio Visualizer — 5 bar animasi CSS murni */
+#audio-visualizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.vis-bar {
+  display: block;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--accent-purple);
+  height: 4px;                 /* default: flat saat tidak play */
+  transition: height 0.2s ease;
+  box-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+}
+
+/* Animasi bar saat musik sedang berjalan */
+#audio-visualizer.playing .vis-bar:nth-child(1) { animation: visBounce 0.9s  ease-in-out infinite alternate; }
+#audio-visualizer.playing .vis-bar:nth-child(2) { animation: visBounce 0.65s ease-in-out infinite alternate; }
+#audio-visualizer.playing .vis-bar:nth-child(3) { animation: visBounce 0.8s  ease-in-out infinite alternate; }
+#audio-visualizer.playing .vis-bar:nth-child(4) { animation: visBounce 0.55s ease-in-out infinite alternate; }
+#audio-visualizer.playing .vis-bar:nth-child(5) { animation: visBounce 0.75s ease-in-out infinite alternate; }
+
+@keyframes visBounce {
+  from { height: 4px;  opacity: 0.5; }
+  to   { height: 24px; opacity: 1;   }
+}
+
+#now-playing-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+#track-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Marquee scroll untuk judul panjang */
+#track-title.scrolling {
+  animation: marqueeScroll 8s linear infinite;
+  display: inline-block;
+  padding-right: 2rem;
+}
+
+@keyframes marqueeScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+#track-duration {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* ── Seek Bar ── */
+#seek-bar-container {
+  width: 100%;
+}
+
+#seek-bar {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border-color);
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#seek-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-purple);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
+  transition: var(--transition);
+}
+
+#seek-bar:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+}
+
+/* ── Player Controls ── */
+#player-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#player-controls button {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#player-controls button:hover {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+  background: rgba(168, 85, 247, 0.1);
+}
+
+/* Tombol Play lebih besar */
+#btn-play {
+  width: 46px !important;
+  height: 46px !important;
+  font-size: 1.1rem !important;
+  border-color: var(--accent-purple) !important;
+  color: var(--accent-purple) !important;
+  background: rgba(168, 85, 247, 0.08) !important;
+}
+
+#btn-play:hover {
+  background: rgba(168, 85, 247, 0.2) !important;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.3);
+}
+
+/* Tombol aktif (shuffle / repeat) */
+#btn-shuffle.active,
+#btn-repeat.active {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+/* ── Volume ── */
+#volume-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+#vol-icon { font-size: 0.88rem; flex-shrink: 0; }
+
+#volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-color);
+  outline: none;
+  cursor: pointer;
+}
+
+#volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--accent-purple);
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(168, 85, 247, 0.5);
+}
+
+/* ── Playlist ── */
+#playlist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+#playlist:empty::after {
+  content: 'No tracks yet — drop some MP3s above!';
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+/* Item playlist */
+.playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: transparent;
+  animation: fadeSlideUp 0.2s ease both;
+}
+
+.playlist-item:hover {
+  background: rgba(168, 85, 247, 0.06);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Track yang sedang diputar */
+.playlist-item.active {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: var(--accent-purple);
+  font-weight: 600;
+}
+
+.playlist-item .track-num {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  min-width: 18px;
+  flex-shrink: 0;
+}
+
+.playlist-item.active .track-num {
+  color: var(--accent-purple);
+}
+
+.playlist-item .track-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-item .track-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0 0.2rem;
+  border-radius: 3px;
+  opacity: 0;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.playlist-item:hover .track-remove { opacity: 1; }
+.playlist-item .track-remove:hover  { color: var(--accent-orange); }
+
+#footer-credit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+/* ------------------------------------------------
+   PART 7B: KEYFRAME ANIMATIONS (global)
+------------------------------------------------ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── NEW: Entry Animations untuk Page Load ── */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Entry Animation Classes ── */
+/* Kartu dimulai dengan state tersembunyi, lalu animasi muncul saat page load */
+.entry-anim-down {
+  animation: slideInFromTop 0.7s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.entry-anim-left {
+  animation: slideInFromLeft 0.75s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+  animation-delay: 0.15s;
+}
+
+.entry-anim-right {
+  animation: slideInFromRight 0.75s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+  animation-delay: 0.15s;
+}
+
+/* ── Stagger Delay untuk Task Items ── */
+/* JS akan menambahkan class .entry-stagger dengan inline style delay */
+.task-item.entry-stagger {
+  animation: fadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Override animasi bawaan fadeSlideUp supaya tidak konflik */
+.task-item:not(.entry-stagger) {
+  animation: fadeSlideUp 0.25s ease both;
+}
+
+/* ------------------------------------------------
+   PART 8: SCROLL-REVEAL ANIMATION
+   Elemen dengan class .reveal dimulai tersembunyi.
+   Saat masuk viewport, JS menambah class .is-visible
+   yang men-trigger animasi slide & fade.
+------------------------------------------------ */
+
+/* State awal: tersembunyi dan bergeser ke bawah */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  /* Transisi smooth — setiap property punya timing sendiri */
+  transition:
+    opacity    0.65s cubic-bezier(0.4, 0, 0.2, 1),
+    transform  0.65s cubic-bezier(0.34, 1.2, 0.64, 1);
+  /* Jangan animasikan saat belum terlihat */
+  will-change: opacity, transform;
+}
+
+/* State terlihat: animasi masuk */
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delay — setiap kartu muncul sedikit lebih lambat */
+/* Dipakai untuk kartu dalam satu baris (main-grid, bottom-grid) */
+.reveal:nth-child(1) { transition-delay: 0s;     }
+.reveal:nth-child(2) { transition-delay: 0.12s;  }
+
+/* Untuk section tunggal, delay disetel via attribute */
+[data-reveal-delay="100"] { transition-delay: 0.1s; }
+[data-reveal-delay="200"] { transition-delay: 0.2s; }
+[data-reveal-delay="300"] { transition-delay: 0.3s; }
+
+/* Penting: pastikan header yang langsung terlihat tidak di-hide */
+.reveal.no-reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* ------------------------------------------------
+   PART 7C: RESPONSIVE — mobile friendly
+------------------------------------------------ */
+@media (max-width: 768px) {
+  /* 2-kolom grid kembali ke 1 kolom di tablet/HP */
+  #main-grid,
+  #bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Urutan tampilan di mobile: Todo dulu, baru Timer */
+  #todo-section  { grid-column: 1; order: 1; }
+  #timer-section { grid-column: 1; order: 2; }
+  #links-section   { grid-column: 1; order: 1; }
+  #ambient-section { grid-column: 1; order: 2; }
+}
+
+@media (max-width: 600px) {
+  #greeting-message { font-size: 1.4rem; }
+  #timer-display    { font-size: 3.5rem; }
+  #app              { padding: 1rem 1rem 3rem; }
+
+  #todo-input-area,
+  #link-input-area  { flex-direction: column; }
+
+  #links-grid       { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  #bar-chart        { gap: 0.4rem; }
+}
+
+/* ------------------------------------------------
+   PART 7D: SCROLLBAR CUSTOM (Webkit)
+------------------------------------------------ */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
