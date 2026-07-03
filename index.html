@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Life Dashboard – To-Do List</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body><div id="canvas-bg-wrapper" style="background:#050810; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:-1; pointer-events:none; overflow:hidden;">
+  <canvas id="plexusCanvas" style="display:block; width:100%; height:100%;"></canvas>
+</div>
+
+<script>
+  // tampilan background digital plexus
+(function(){
+  const canvas = document.getElementById('plexusCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, dpr;
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.parentElement.getBoundingClientRect();
+    w = rect.width; h = rect.height;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COUNT = 90;
+  const LINK_DIST = 150;
+  const palette = ['#4fd8ff', '#38bdf8', '#7c7ff2', '#a78bfa', '#22d3ee'];
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  const particles = [];
+  for(let i=0; i<COUNT; i++){
+    particles.push({
+      // MODIFIKASI: Sebaran awal langsung mengikuti lebar & tinggi layar laptop nyata
+      x: rand(0,1) * window.innerWidth,
+      y: rand(0,1) * window.innerHeight,
+      vx: rand(-0.12,0.12),
+      vy: rand(-0.12,0.12),
+      r: rand(1.1,2.6),
+      color: palette[Math.floor(Math.random()*palette.length)],
+      phase: rand(0, Math.PI*2)
+    });
+  }
+
+  let baseW = window.innerWidth, baseH = window.innerHeight;
+  function initBounds(){
+    baseW = w; baseH = h;
+    particles.forEach(p=>{ p.x = rand(0,1)*baseW; p.y = rand(0,1)*baseH; });
+  }
+  initBounds();
+
+  let t = 0;
+
+  function step(){
+    t += 1;
+    ctx.clearRect(0,0,w,h);
+
+    // background wash
+    const grad = ctx.createRadialGradient(w*0.5,h*0.5,0,w*0.5,h*0.5,Math.max(w,h)*0.75);
+    grad.addColorStop(0,'#050810');
+    grad.addColorStop(1,'#000000');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+    // update positions
+    for(const p of particles){
+      p.x += p.vx;
+      p.y += p.vy;
+      if(p.x < -20) p.x = w+20;
+      if(p.x > w+20) p.x = -20;
+      if(p.y < -20) p.y = h+20;
+      if(p.y > h+20) p.y = -20;
+    }
+
+    // links
+    ctx.lineWidth = 0.6;
+    for(let i=0; i<particles.length; i++){
+      for(let j=i+1; j<particles.length; j++){
+        const a = particles[i], b = particles[j];
+        const dx = a.x-b.x, dy = a.y-b.y;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if(dist < LINK_DIST){
+          const alpha = (1 - dist/LINK_DIST) * 0.35;
+          ctx.strokeStyle = `rgba(80,190,255,${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(a.x,a.y);
+          ctx.lineTo(b.x,b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // nodes with glow
+    for(const p of particles){
+      const pulse = 0.6 + 0.4*Math.sin(t*0.02 + p.phase);
+      const glowR = p.r * 5 * pulse;
+      const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,glowR);
+      g.addColorStop(0, p.color + 'aa');
+      g.addColorStop(1, p.color + '00');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,glowR,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+</script>
+    <div id="bg-grid"></div>
+
+    <div id="app">
+
+      <!-- ══════════════════════════════════════════
+           BARIS 1: HEADER PENUH — Greeting & Quotes
+      ══════════════════════════════════════════ -->
+      <header id="greeting-section" class="entry-anim-down">
+        <div id="greeting-text">
+          <div id="greeting-message-row">
+            <h1 id="greeting-message">Good Morning, <span id="display-name">User</span>! 👋</h1>
+            <button id="edit-name-btn" aria-label="Edit name" title="Edit name">✎</button>
+          </div>
+          <p id="datetime-display">Loading date and time...</p>
+        </div>
+
+        <!-- ── MINI RPG STATUS SYSTEM ── -->
+        <div id="rpg-status-container" aria-label="RPG Status">
+
+          <!-- Stat Box 1: Focus Energy Bar -->
+          <div class="rpg-stat-box" id="energy-box">
+            <div class="rpg-stat-header">
+              <span class="rpg-stat-label">⚡ Focus Energy</span>
+              <span id="energy-text">100%</span>
+            </div>
+            <div id="energy-bar-track" role="progressbar"
+                 aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"
+                 aria-label="Focus energy level">
+              <div id="energy-bar-fill"></div>
+            </div>
+          </div>
+
+          <!-- Stat Box 2: Coder Class Badge -->
+          <div class="rpg-stat-box" id="coder-class-box">
+            <span class="rpg-stat-label">level of focus</span>
+            <div id="coder-class-badge" aria-label="Current coder rank">
+              <span id="coder-rank-text">Novice</span>
+            </div>
+          </div>
+
+        </div><!-- end #rpg-status-container -->
+
+        <div id="quote-box">
+          <p id="motivational-quote">"Loading quote..."</p>
+        </div>
+        <div id="name-input-area" hidden>
+          <input
+            type="text"
+            id="user-name-input"
+            placeholder="Enter your name..."
+            maxlength="30"
+            aria-label="Enter your name"
+          />
+          <button id="save-name-btn" aria-label="Save name">Save</button>
+        </div>
+      </header>
+
+      <!-- ══════════════════════════════════════════
+           BARIS 2: MAIN GRID — Todo (kiri) | Timer (kanan)
+      ══════════════════════════════════════════ -->
+      <div id="main-grid">
+
+        <!-- TO-DO LIST (kiri) -->
+        <section id="todo-section" aria-label="To-Do List" class="entry-anim-right">
+          <h2 class="section-title">✅ To-Do List</h2>
+          <div id="progress-container" aria-label="Task progress">
+            <div id="progress-bar-track">
+              <div id="progress-bar-fill"></div>
+            </div>
+            <span id="progress-label">0 / 0 tasks completed</span>
+          </div>
+          <div id="todo-input-area">
+            <input
+              type="text"
+              id="new-task-input"
+              placeholder="Add a new task..."
+              maxlength="100"
+              aria-label="New task description"
+            />
+            <select id="task-priority" aria-label="Task priority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <button id="add-task-btn" aria-label="Add task">+ Add</button>
+          </div>
+          <div id="sort-controls">
+            <span>Sort by:</span>
+            <button class="sort-btn" data-sort="default">Default</button>
+            <button class="sort-btn" data-sort="priority">Priority</button>
+            <button class="sort-btn" data-sort="name">Name A-Z</button>
+            <button class="sort-btn" data-sort="status">Status</button>
+          </div>
+          <ul id="task-list" aria-label="Task list"></ul>
+        </section>
+
+        <!-- FOCUS TIMER (kanan) -->
+        <section id="timer-section" aria-label="Focus Timer" class="entry-anim-left">
+          <h2 class="section-title">⏱ Focus Timer</h2>
+          <div id="streak-display">
+            <span id="streak-count">0</span>
+            <span id="streak-label">🔥 Sessions Completed</span>
+          </div>
+          <div id="timer-display" aria-live="polite">
+            <span id="timer-minutes">25</span>
+            <span id="timer-colon">:</span>
+            <span id="timer-seconds">00</span>
+          </div>
+          <div id="timer-custom-duration">
+            <label for="custom-minutes">Set Duration (minutes):</label>
+            <input
+              type="number"
+              id="custom-minutes"
+              min="1"
+              max="120"
+              value="25"
+              aria-label="Set timer duration in minutes"
+            />
+            <button id="apply-duration-btn">Apply</button>
+          </div>
+          <div id="timer-controls">
+            <button id="timer-start-btn" aria-label="Start timer">▶ Start</button>
+            <button id="timer-pause-btn" aria-label="Pause timer" disabled>⏸ Pause</button>
+            <button id="timer-reset-btn" aria-label="Reset timer">↺ Reset</button>
+          </div>
+          <audio id="timer-alarm" preload="auto"></audio>
+        </section>
+
+      </div><!-- end #main-grid -->
+
+      <!-- ══════════════════════════════════════════
+           BARIS 3: BOTTOM GRID — Quick Links (kiri) | Ambient (kanan)
+      ══════════════════════════════════════════ -->
+      <div id="bottom-grid" class="reveal">
+
+        <!-- QUICK LINKS (kiri) -->
+        <section id="links-section" aria-label="Quick Links">
+          <h2 class="section-title">🔗 Quick Links</h2>
+          <div id="link-input-area">
+            <input
+              type="text"
+              id="new-link-name"
+              placeholder="Link name..."
+              maxlength="30"
+              aria-label="Link name"
+            />
+            <input
+              type="url"
+              id="new-link-url"
+              placeholder="https://..."
+              aria-label="Link URL"
+            />
+            <button id="add-link-btn" aria-label="Add link">+ Add Link</button>
+          </div>
+          <div id="links-grid" aria-label="Saved links"></div>
+        </section>
+
+        <!-- LOCAL MP3 PLAYER (kanan) -->
+        <footer id="ambient-section" aria-label="Local MP3 Player">
+          <h2 class="section-title">🎵 Music Player</h2>
+
+          <!-- ── DROP ZONE ── -->
+          <div id="drop-zone" role="button" tabindex="0" aria-label="Drop MP3 files here or click to browse">
+            <span id="drop-icon">🎵</span>
+            <p id="drop-text">Drop MP3 files here</p>
+            <p id="drop-subtext">or click to browse</p>
+            <!-- Input file tersembunyi — dipicu oleh klik drop zone -->
+            <input type="file" id="file-input" accept="audio/mp3,audio/mpeg,.mp3" multiple hidden />
+          </div>
+
+          <!-- ── NOW PLAYING DISPLAY ── -->
+          <div id="now-playing-section">
+            <!-- Visualizer bar (animasi CSS murni) -->
+            <div id="audio-visualizer" aria-hidden="true">
+              <span class="vis-bar"></span>
+              <span class="vis-bar"></span>
+              <span class="vis-bar"></span>
+              <span class="vis-bar"></span>
+              <span class="vis-bar"></span>
+            </div>
+            <div id="now-playing-info">
+              <p id="track-title">No track loaded</p>
+              <p id="track-duration">--:-- / --:--</p>
+            </div>
+          </div>
+
+          <!-- ── SEEK BAR ── -->
+          <div id="seek-bar-container">
+            <input
+              type="range"
+              id="seek-bar"
+              min="0"
+              max="100"
+              value="0"
+              step="0.1"
+              aria-label="Seek track position"
+            />
+          </div>
+
+          <!-- ── PLAYER CONTROLS ── -->
+          <div id="player-controls">
+            <button id="btn-prev"    aria-label="Previous track">⏮</button>
+            <button id="btn-play"    aria-label="Play">▶</button>
+            <button id="btn-next"    aria-label="Next track">⏭</button>
+            <button id="btn-shuffle" aria-label="Shuffle" title="Shuffle">⇄</button>
+            <button id="btn-repeat"  aria-label="Repeat" title="Repeat">↻</button>
+          </div>
+
+          <!-- ── VOLUME CONTROL ── -->
+          <div id="volume-row">
+            <span id="vol-icon">🔊</span>
+            <input
+              type="range"
+              id="volume-slider"
+              min="0"
+              max="1"
+              step="0.05"
+              value="0.8"
+              aria-label="Volume"
+            />
+          </div>
+
+          <!-- ── PLAYLIST ── -->
+          <ul id="playlist" aria-label="Playlist"></ul>
+
+          <p id="footer-credit">Built with ❤️ By Andika Mulyadana >///<</p>
+        </footer>
+
+      </div><!-- end #bottom-grid -->
+
+      <!-- ══════════════════════════════════════════
+           BARIS 4: TOMBOL TOGGLE GRAFIK
+      ══════════════════════════════════════════ -->
+      <div id="analytics-toggle-row" class="reveal" data-reveal-delay="100">
+        <button id="toggle-analytics-btn" aria-expanded="false" aria-controls="analytics-section">
+          <span id="toggle-analytics-icon">▼</span>
+          Show Weekly Focus Graph
+        </button>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           BARIS 5: ANALYTICS (tersembunyi secara default)
+      ══════════════════════════════════════════ -->
+      <section id="analytics-section" aria-label="Productivity Analytics" hidden>
+        <h2 class="section-title">Weekly Focus Graph</h2>
+        <p id="analytics-subtitle">Focus sessions completed per day (last 7 days)</p>
+        <div id="bar-chart" aria-label="Weekly focus bar chart"></div>
+        <button id="reset-analytics-btn" aria-label="Reset analytics data">Reset All Data</button>
+      </section>
+
+    </div><!-- end #app -->
+
+    <script src="script.js"></script>
+  </body>
+</html>
